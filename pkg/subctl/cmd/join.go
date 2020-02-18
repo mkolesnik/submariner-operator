@@ -28,13 +28,19 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
+    v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes"
+
+	"github.com/submariner-io/submariner-operator/pkg/broker"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
 
 	k8serrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
+    //"k8s.io/client-go/kubernetes"
 
 	submariner "github.com/submariner-io/submariner-operator/pkg/apis/submariner/v1alpha1"
+	//"github.com/submariner-io/submariner-operator/pkg/broker"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/network"
 	"github.com/submariner-io/submariner-operator/pkg/internal/cli"
 	"github.com/submariner-io/submariner-operator/pkg/subctl/datafile"
@@ -62,6 +68,7 @@ var (
 	brokerClusterContext string
 	cableDriver          string
 	disableOpenShiftCVO  bool
+	clienttoken          *v1.Secret
 )
 
 func init() {
@@ -266,6 +273,11 @@ func joinSubmarinerCluster(config *rest.Config, subctlData *datafile.SubctlData)
 	}
 
 	status.Start("Deploying Submariner")
+	brokerconfig := subctlData.GetBrokerConfig()
+	brokerclientset, err := kubernetes.NewForConfig(brokerconfig)
+	exitOnError("Error retrieving broker config", err)
+	clienttoken = createSAPerCluster(brokerclientset, broker.SubmarinerBrokerNamespace)
+	fmt.Printf("client token is %s", clienttoken)
 	err = submarinercr.Ensure(config, OperatorNamespace, populateSubmarinerSpec(subctlData))
 	status.End(err == nil)
 	exitOnError("Error deploying Submariner", err)
@@ -425,7 +437,7 @@ func populateSubmarinerSpec(subctlData *datafile.SubctlData) submariner.Submarin
 		CeIPSecPSK:               base64.StdEncoding.EncodeToString(subctlData.IPSecPSK.Data["psk"]),
 		BrokerK8sCA:              base64.StdEncoding.EncodeToString(subctlData.ClientToken.Data["ca.crt"]),
 		BrokerK8sRemoteNamespace: string(subctlData.ClientToken.Data["namespace"]),
-		BrokerK8sApiServerToken:  string(subctlData.ClientToken.Data["token"]),
+		BrokerK8sApiServerToken:  string(clienttoken.Data["token"]),
 		BrokerK8sApiServer:       brokerURL,
 		Broker:                   "k8s",
 		NatEnabled:               !disableNat,
@@ -441,6 +453,17 @@ func populateSubmarinerSpec(subctlData *datafile.SubctlData) submariner.Submarin
 	if globalCIDR != "" {
 		submarinerSpec.GlobalCIDR = globalCIDR
 	}
-
+	fmt.Printf("submariner spec is %s", submarinerSpec)
 	return submarinerSpec
+}
+
+func createSAPerCluster(clientset *kubernetes.Clientset, brokernamespace string) (*v1.Secret) {
+	broker.CreateNewBrokerSA(clientset, clusterID+"-submariner-k8s-broker-client")
+	serviceaccount, _ := clientset.CoreV1().ServiceAccounts(broker.SubmarinerBrokerNamespace).List(metav1.ListOptions{})
+	fmt.Printf("serviceaccount is %s", serviceaccount)
+	broker.CreateNewBrokerRole(clientset, clusterID+"-submariner-k8s-broker-client")
+	broker.CreateNewBrokerRoleBinding(clientset, clusterID+"-submariner-k8s-broker-client", clusterID+"-submariner-k8s-broker-client")
+	broker.WaitForClientToken(clientset)
+	clienttoken, _ = broker.GetClientTokenSecret(clientset, brokernamespace, clusterID+"-submariner-k8s-broker-client")
+	return clienttoken
 }
