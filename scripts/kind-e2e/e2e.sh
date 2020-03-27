@@ -136,8 +136,8 @@ function create_subm_vars() {
   serviceCIDR_cluster3=100.96.0.0/16
   natEnabled=false
   if [[ $globalnet = true ]]; then
-      globalCIDR_cluster2=169.254.0.0/19
-      globalCIDR_cluster3=169.254.32.0/19
+      globalCIDR_cluster2=169.254.0.0/24
+      globalCIDR_cluster3=169.254.1.0/24
   fi
 
   subm_engine_image_repo=local
@@ -324,6 +324,7 @@ for i in 2 3; do
                         --cable-driver ${subm_cabledriver} \
                         --broker-cluster-context "cluster1" \
                         --disable-nat \
+                        --globalnet-cluster-size 250 \
                         broker-info.subm |& cat
         set +o pipefail
     else

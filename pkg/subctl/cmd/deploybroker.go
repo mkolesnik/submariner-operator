@@ -18,9 +18,9 @@ package cmd
 
 import (
 	"fmt"
-	"net"
 
 	"github.com/spf13/cobra"
+	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
 
 	"github.com/submariner-io/submariner-operator/pkg/broker"
 	"github.com/submariner-io/submariner-operator/pkg/internal/cli"
@@ -130,31 +130,13 @@ var deployBroker = &cobra.Command{
 }
 
 func isValidGlobalnetConfig() (bool, error) {
+	var err error
 	if !globalnetEnable {
 		return true, nil
 	}
-	_, network, err := net.ParseCIDR(globalnetCidrRange)
-	if err != nil {
+	globalnetClusterSize, err = globalnet.GetValidClusterSize(globalnetCidrRange, globalnetClusterSize)
+	if err != nil || globalnetClusterSize == 0 {
 		return false, err
 	}
-	ones, totalbits := network.Mask.Size()
-	availableSize := 1 << uint(totalbits-ones)
-	userClusterSize := globalnetClusterSize
-	globalnetClusterSize = nextPowerOf2(uint32(globalnetClusterSize))
-	if globalnetClusterSize > uint(availableSize/2) {
-		return false, fmt.Errorf("Cluster size %d, should be <= %d", userClusterSize, availableSize/2)
-	}
-	return true, nil
-}
-
-//Refer: https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
-func nextPowerOf2(n uint32) uint {
-	n--
-	n |= n >> 1
-	n |= n >> 2
-	n |= n >> 4
-	n |= n >> 8
-	n |= n >> 16
-	n++
-	return uint(n)
+	return true, err
 }

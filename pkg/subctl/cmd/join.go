@@ -90,6 +90,8 @@ func addJoinFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&cableDriver, "cable-driver", "", "Cable driver implementation")
 	cmd.Flags().BoolVar(&disableOpenShiftCVO, "disable-cvo", false,
 		"disable OpenShift's cluster version operator if necessary, without prompting")
+	cmd.Flags().UintVar(&globalnetClusterSize, "globalnet-cluster-size", 0,
+		"Cluster size for GlobalCIDR allocated to this cluster")
 }
 
 const (
@@ -195,6 +197,13 @@ func joinSubmarinerCluster(config *rest.Config, subctlData *datafile.SubctlData)
 		if len(answers.ColorCodes) > 0 {
 			colorCodes = answers.ColorCodes
 		}
+	}
+	if subctlData.GlobalnetCidrRange != "" && globalnetClusterSize != 0 && globalnetClusterSize != subctlData.GlobalnetClusterSize {
+		clusterSize, err := globalnet.GetValidClusterSize(subctlData.GlobalnetCidrRange, globalnetClusterSize)
+		if err != nil || clusterSize == 0 {
+			exitOnError("Invalid globalnet-cluster-size", err)
+		}
+		subctlData.GlobalnetClusterSize = clusterSize
 	}
 
 	if !noLabel {
