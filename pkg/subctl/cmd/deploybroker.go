@@ -56,7 +56,7 @@ func init() {
 	panicOnError(err)
 
 	deployBroker.PersistentFlags().StringVar(&ipsecSubmFile, "ipsec-psk-from", "",
-		"Import IPSEC PSK from existing submariner broker file, like broker-info.subm")
+		"Import IPsec PSK from existing submariner broker file, like broker-info.subm")
 
 	addKubeconfigFlag(deployBroker)
 	addJoinFlags(deployBroker)
@@ -83,18 +83,18 @@ var deployBroker = &cobra.Command{
 		status := cli.NewStatus()
 		status.Start("Deploying broker")
 		err = broker.Ensure(config)
-		status.End(err == nil)
+		status.End(cli.CheckForError(err))
 		exitOnError("Error deploying the broker", err)
 
 		status.Start(fmt.Sprintf("Creating %s file", brokerDetailsFilename))
 
-		// If deploy-broker is retried we will attempt to re-use the existing IPSEC PSK secret
+		// If deploy-broker is retried we will attempt to re-use the existing IPsec PSK secret
 		if ipsecSubmFile == "" {
 			if _, err := datafile.NewFromFile(brokerDetailsFilename); err == nil {
 				ipsecSubmFile = brokerDetailsFilename
-				status.QueueSuccessMessage(fmt.Sprintf("Reusing IPSEC PSK from existing %s", brokerDetailsFilename))
+				status.QueueWarningMessage(fmt.Sprintf("Reusing IPsec PSK from existing %s", brokerDetailsFilename))
 			} else {
-				status.QueueSuccessMessage(fmt.Sprintf("A new IPSEC PSK will be generated for %s", brokerDetailsFilename))
+				status.QueueSuccessMessage(fmt.Sprintf("A new IPsec PSK will be generated for %s", brokerDetailsFilename))
 			}
 		}
 
@@ -117,7 +117,7 @@ var deployBroker = &cobra.Command{
 		}
 
 		err = subctlData.WriteToFile(brokerDetailsFilename)
-		status.End(err == nil)
+		status.End(cli.CheckForError(err))
 		exitOnError("Error writing the broker information", err)
 
 		if enableDataplane {
@@ -132,7 +132,7 @@ func isValidGlobalnetConfig() (bool, error) {
 		return true, nil
 	}
 	defaultGlobalnetClusterSize, err = globalnet.GetValidClusterSize(globalnetCidrRange, defaultGlobalnetClusterSize)
-	if err != nil || defaultGlobalnetClusterSize <= 0 {
+	if err != nil || defaultGlobalnetClusterSize == 0 {
 		return false, err
 	}
 	return true, err

@@ -11,15 +11,15 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.11.3 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.12
-	github.com/onsi/ginkgo v1.12.0
-	github.com/onsi/gomega v1.9.0
+	github.com/onsi/ginkgo v1.12.1
+	github.com/onsi/gomega v1.10.0
 	github.com/operator-framework/operator-sdk v0.10.1-0.20191007233534-070d931e130a
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.2.1 // indirect
 	github.com/spf13/cobra v0.0.7
 	github.com/spf13/pflag v1.0.5
 	github.com/submariner-io/shipyard v0.0.0-20200424120554-752db6dc1c90
-	github.com/submariner-io/submariner v0.3.0-rc2
+	github.com/submariner-io/submariner v0.3.1-0.20200515132708-8214b2793bbd
 	go.opencensus.io v0.22.1 // indirect
 	go.uber.org/zap v1.12.0 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
@@ -37,7 +37,6 @@ require (
 	k8s.io/klog v0.4.0
 	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208
 	sigs.k8s.io/controller-runtime v0.3.0
-	sigs.k8s.io/kind v0.7.0
 	sigs.k8s.io/yaml v1.2.0
 )
 
