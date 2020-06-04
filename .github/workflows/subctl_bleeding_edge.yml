@@ -29,5 +29,9 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release: Bleeding edge
+          message: |
+            This is the latest binary, built straight from the master branch.
+            As such, it might break or not work as you expect.
+            If you want a stable binary, check out [the latest stable](https://github.com/submariner-io/submariner-operator/releases/latest) release.
           tag: devel
           files: ${{ env.BINARIES }}
