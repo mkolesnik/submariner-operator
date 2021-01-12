@@ -31,8 +31,6 @@ import (
 	"github.com/submariner-io/submariner-operator/pkg/subctl/operator/submarinercr"
 )
 
-const submMissingMessage = "Submariner is not installed"
-
 // showCmd represents the show command
 var showCmd = &cobra.Command{
 	Use:   "show",
@@ -121,4 +119,21 @@ func getSubmarinerResource(config *rest.Config) *v1alpha1.Submariner {
 	}
 
 	return submariner
+}
+
+func printInfoForClustersUsing(printerFn func(*rest.Config, *v1alpha1.Submariner)) {
+	configs, err := getMultipleRestConfigs(kubeConfig, kubeContext)
+	exitOnError("Error getting REST config for cluster", err)
+	for _, item := range configs {
+		fmt.Println()
+		fmt.Printf("Showing information for cluster %q:\n", item.clusterName)
+		submariner := getSubmarinerResource(item.config)
+
+		if submariner == nil {
+			fmt.Println("Submariner is not installed")
+			continue
+		}
+
+		printerFn(item.config, submariner)
+	}
 }

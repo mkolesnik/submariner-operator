@@ -19,6 +19,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/submariner-io/submariner-operator/apis/submariner/v1alpha1"
+	"k8s.io/client-go/rest"
 )
 
 var showAllCmd = &cobra.Command{
@@ -34,31 +36,19 @@ func init() {
 }
 
 func showAll(cmd *cobra.Command, args []string) {
-	configs, err := getMultipleRestConfigs(kubeConfig, kubeContext)
-	exitOnError("Error getting REST config for cluster", err)
+	printInfoForClustersUsing(allInfoPrinter)
+}
 
-	for _, item := range configs {
-		fmt.Println()
-		fmt.Printf("Showing information for cluster %q:\n", item.clusterName)
-
-		fmt.Println("Showing Network details")
-		showNetworkSingleCluster(item.config)
-		fmt.Println("")
-
-		submariner := getSubmarinerResource(item.config)
-
-		if submariner == nil {
-			fmt.Println(submMissingMessage)
-			continue
-		}
-
-		fmt.Println("\nShowing Endpoint details")
-		showEndpointsFor(submariner)
-		fmt.Println("\nShowing Connection details")
-		showConnectionsFor(submariner)
-		fmt.Println("\nShowing Gateway details")
-		showGatewaysFor(submariner)
-		fmt.Println("\nShowing version details")
-		getVersionsFor(item.config)
-	}
+func allInfoPrinter(config *rest.Config, submariner *v1alpha1.Submariner) {
+	fmt.Println("Showing Network details")
+	showNetworkSingleCluster(config)
+	fmt.Println("")
+	fmt.Println("\nShowing Endpoint details")
+	endpointsPrinter(config, submariner)
+	fmt.Println("\nShowing Connection details")
+	connectionsPrinter(config, submariner)
+	fmt.Println("\nShowing Gateway details")
+	gatewaysPrinter(config, submariner)
+	fmt.Println("\nShowing version details")
+	clusterVersionsPrinter(config, submariner)
 }

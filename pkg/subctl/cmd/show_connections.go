@@ -21,6 +21,7 @@ import (
 
 	"github.com/spf13/cobra"
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
+	"k8s.io/client-go/rest"
 
 	"github.com/submariner-io/submariner-operator/apis/submariner/v1alpha1"
 )
@@ -72,23 +73,10 @@ func getConnectionsStatus(submariner *v1alpha1.Submariner) []connectionStatus {
 }
 
 func showConnections(cmd *cobra.Command, args []string) {
-	configs, err := getMultipleRestConfigs(kubeConfig, kubeContext)
-	exitOnError("Error getting REST config for cluster", err)
-	for _, item := range configs {
-		fmt.Println()
-		fmt.Printf("Showing information for cluster %q:\n", item.clusterName)
-		submariner := getSubmarinerResource(item.config)
-
-		if submariner == nil {
-			fmt.Println(submMissingMessage)
-			continue
-		}
-
-		showConnectionsFor(submariner)
-	}
+	printInfoForClustersUsing(connectionsPrinter)
 }
 
-func showConnectionsFor(submariner *v1alpha1.Submariner) {
+func connectionsPrinter(_ *rest.Config, submariner *v1alpha1.Submariner) {
 	status := getConnectionsStatus(submariner)
 	printConnections(status)
 }

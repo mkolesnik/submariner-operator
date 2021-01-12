@@ -110,26 +110,13 @@ func getVersions(config *rest.Config, submariner *v1alpha1.Submariner) []version
 	return versions
 }
 
-func getVersionsFor(config *rest.Config) {
-	submariner := getSubmarinerResource(config)
-
-	if submariner == nil {
-		fmt.Println(submMissingMessage)
-		return
-	}
-
+func clusterVersionsPrinter(config *rest.Config, submariner *v1alpha1.Submariner) {
 	versions := getVersions(config, submariner)
 	printVersions(versions)
 }
 
 func showVersions(cmd *cobra.Command, args []string) {
-	configs, err := getMultipleRestConfigs(kubeConfig, kubeContext)
-	exitOnError("Error getting REST config for cluster", err)
-	for _, item := range configs {
-		fmt.Println()
-		fmt.Printf("Showing information for cluster %q:\n", item.clusterName)
-		getVersionsFor(item.config)
-	}
+	printInfoForClustersUsing(clusterVersionsPrinter)
 }
 
 func printVersions(versions []versionImageInfo) {
