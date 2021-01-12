@@ -86,15 +86,20 @@ func showEndpoints(cmd *cobra.Command, args []string) {
 	for _, item := range configs {
 		fmt.Println()
 		fmt.Printf("Showing information for cluster %q:\n", item.clusterName)
-		showEndpointsFor(getSubmarinerResource(item.config))
+		submariner := getSubmarinerResource(item.config)
+
+		if submariner == nil {
+			fmt.Println(submMissingMessage)
+			continue
+		}
+
+		showEndpointsFor(submariner)
 	}
 }
 
 func showEndpointsFor(submariner *v1alpha1.Submariner) {
-	if submariner != nil {
-		status := getEndpointsStatus(submariner)
-		printEndpoints(status)
-	}
+	status := getEndpointsStatus(submariner)
+	printEndpoints(status)
 }
 
 func printEndpoints(endpoints []endpointStatus) {

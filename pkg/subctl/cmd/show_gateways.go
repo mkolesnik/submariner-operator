@@ -88,15 +88,20 @@ func showGateways(cmd *cobra.Command, args []string) {
 	for _, item := range configs {
 		fmt.Println()
 		fmt.Printf("Showing information for cluster %q:\n", item.clusterName)
-		showGatewaysFor(getSubmarinerResource(item.config))
+		submariner := getSubmarinerResource(item.config)
+
+		if submariner == nil {
+			fmt.Println(submMissingMessage)
+			continue
+		}
+
+		showGatewaysFor(submariner)
 	}
 }
 
 func showGatewaysFor(submariner *v1alpha1.Submariner) {
-	if submariner != nil {
-		status := getGatewaysStatus(submariner)
-		printGateways(status)
-	}
+	status := getGatewaysStatus(submariner)
+	printGateways(status)
 }
 
 func printGateways(gateways []gatewayStatus) {

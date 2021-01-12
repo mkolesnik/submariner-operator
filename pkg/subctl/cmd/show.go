@@ -31,6 +31,8 @@ import (
 	"github.com/submariner-io/submariner-operator/pkg/subctl/operator/submarinercr"
 )
 
+const submMissingMessage = "Submariner is not installed"
+
 // showCmd represents the show command
 var showCmd = &cobra.Command{
 	Use:   "show",
@@ -112,7 +114,6 @@ func getSubmarinerResource(config *rest.Config) *v1alpha1.Submariner {
 	submariner, err := submarinerClient.SubmarinerV1alpha1().Submariners(OperatorNamespace).Get(submarinercr.SubmarinerName, v1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			fmt.Println("Submariner is not installed")
 			return nil
 		}
 
