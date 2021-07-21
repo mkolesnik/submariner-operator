@@ -56,10 +56,22 @@ func prepareAws(cmd *cobra.Command, args []string) {
 		},
 	}
 
+	// For load-banalced gateways we want these ports open internally to facilitate private-ip to pivate-ip gateways communications.
+	if gateways == 0 {
+		input.InternalPorts = append(input.InternalPorts,
+			api.PortSpec{Port: nattPort, Protocol: "udp"},
+			api.PortSpec{Port: natDiscoveryPort, Protocol: "udp"},
+		)
+	}
+
 	gwInput := api.GatewayDeployInput{
 		PublicPorts: []api.PortSpec{
 			{Port: nattPort, Protocol: "udp"},
 			{Port: natDiscoveryPort, Protocol: "udp"},
+
+			// ESP & AH protocols are used for private-ip to private-ip gateway communications on dedicated gateways
+			{Port: 0, Protocol: "50"},
+			{Port: 0, Protocol: "51"},
 		},
 		Gateways: gateways,
 	}
